@@ -34,9 +34,10 @@ class CameraFragment : Fragment() {
         return inflater.inflate(R.layout.camera_fragment, container, false)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(this).get(CameraViewModel::class.java)
+        init()
     }
 
     override fun onResume() {
@@ -45,6 +46,16 @@ class CameraFragment : Fragment() {
             findNavController().navigate(R.id.action_camera_to_permission)
         } else {
             bindCamera()
+        }
+    }
+
+    private fun init() {
+        initView()
+    }
+
+    private fun initView() {
+        btn_cf_settings.setOnClickListener {
+            findNavController().navigate(R.id.action_camera_to_settings)
         }
     }
 
