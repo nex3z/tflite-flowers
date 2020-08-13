@@ -36,8 +36,8 @@
 
     <fragment
         android:id="@+id/settings_fragment"
-        android:name="com.nex3z.flowers.classification.ui.SettingsFragment"
-        android:label="SettingsFragment" >
+        android:name="com.nex3z.flowers.classification.ui.settings.SettingsFragment"
+        android:label="@string/c_settings_title" >
         <action
             android:id="@+id/action_settings_to_camera"
             app:destination="@id/camera_fragment"

@@ -29,7 +29,7 @@ class PermissionFragment : Fragment() {
                 Timber.v("onRequestPermissionsResult(): Permission granted")
                 navigateToCamera()
             } else {
-                Toast.makeText(requireContext(), R.string.m_camera_permission_denied,
+                Toast.makeText(requireContext(), R.string.m_permission_camera_permission_denied,
                     Toast.LENGTH_LONG).show()
             }
         }

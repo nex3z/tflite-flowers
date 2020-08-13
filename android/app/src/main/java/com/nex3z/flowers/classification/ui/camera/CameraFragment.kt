@@ -5,16 +5,20 @@ import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.cardview.widget.CardView
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.behavior.SwipeDismissBehavior
 import com.nex3z.flowers.classification.R
 import com.nex3z.flowers.classification.util.hasCameraPermissions
 import kotlinx.android.synthetic.main.camera_fragment.*
@@ -26,7 +30,7 @@ import kotlin.math.min
 
 class CameraFragment : Fragment() {
 
-    private lateinit var viewModel: CameraViewModel
+    private lateinit var viewModel: ClassifierViewModel
     private val executor = Executors.newSingleThreadExecutor()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -36,7 +40,7 @@ class CameraFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(this).get(CameraViewModel::class.java)
+        viewModel = ViewModelProvider(requireActivity()).get(ClassifierViewModel::class.java)
         init()
     }
 
@@ -51,12 +55,42 @@ class CameraFragment : Fragment() {
 
     private fun init() {
         initView()
+        initClassifier()
+        bindData()
     }
 
     private fun initView() {
+        with (rv_cf_result.layoutParams as CoordinatorLayout.LayoutParams) {
+            val swipeDismissBehavior = SwipeDismissBehavior<CardView>().apply {
+                setSwipeDirection(SwipeDismissBehavior.SWIPE_DIRECTION_START_TO_END)
+                setListener(object: SwipeDismissBehavior.OnDismissListener {
+                    override fun onDismiss(view: View?) {
+                        cl_cf_result_container.visibility = View.GONE
+                        fab_cf_pick_image.show()
+                    }
+                    override fun onDragStateChanged(state: Int) {}
+                })
+            }
+            behavior = swipeDismissBehavior
+        }
+
         btn_cf_settings.setOnClickListener {
             findNavController().navigate(R.id.action_camera_to_settings)
         }
+    }
+
+    private fun initClassifier() {
+        viewModel.initClassifier()
+    }
+
+    private fun bindData() {
+        viewModel.recognition.observe(viewLifecycleOwner, Observer {
+            renderResult(it)
+        })
+        viewModel.error.observe(viewLifecycleOwner, Observer {
+            Toast.makeText(requireContext(), "[${it.code}]: ${it.message}", Toast.LENGTH_SHORT)
+                .show()
+        })
     }
 
     private fun bindCamera() = pv_cf_view_finder.post {
@@ -85,6 +119,7 @@ class CameraFragment : Fragment() {
                 .build()
                 .also {
                     it.setAnalyzer(executor, ImageAnalysis.Analyzer { image ->
+                        viewModel.classify(image)
                         image.close()
                     })
                 }
@@ -98,9 +133,19 @@ class CameraFragment : Fragment() {
             } catch (e: Exception) {
                 Timber.e(e, "bindCamera(): Failed to bind use cases")
             }
-//            Timber.v("imageAnalysis.attachedSurfaceResolution = ${imageAnalysis.attachedSurfaceResolution}")
-//            Timber.v("preview.attachedSurfaceResolution = ${preview.attachedSurfaceResolution}")
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun renderResult(result: Result?) {
+        if (result != null) {
+            cl_cf_result_container.visibility = View.VISIBLE
+            fab_cf_pick_image.hide()
+            rv_cf_result.alpha = 1.0f
+            rv_cf_result.render(result)
+        } else {
+            Toast.makeText(requireContext(), R.string.m_camera_failed_to_recognize, Toast.LENGTH_SHORT)
+                .show()
+        }
     }
 
     companion object {
