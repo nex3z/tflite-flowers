@@ -4,6 +4,7 @@
     <string name="m_permission_camera_permission_denied">Need camera permission to continue</string>
 
     <string name="m_camera_failed_to_recognize">Failed to recognize objects</string>
+    <string name="m_camera_pick_image">Pick image</string>
     <string name="cd_camera_settings">Settings button</string>
     <string name="cd_camera_result_image">Result image</string>
     <string name="cd_camera_select_from_gallery">Select from gallery</string>

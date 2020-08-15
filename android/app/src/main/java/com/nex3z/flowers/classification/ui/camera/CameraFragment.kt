@@ -1,6 +1,12 @@
 package com.nex3z.flowers.classification.ui.camera
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.View
@@ -23,7 +29,6 @@ import com.nex3z.flowers.classification.R
 import com.nex3z.flowers.classification.util.hasCameraPermissions
 import kotlinx.android.synthetic.main.camera_fragment.*
 import timber.log.Timber
-import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -31,7 +36,6 @@ import kotlin.math.min
 class CameraFragment : Fragment() {
 
     private lateinit var viewModel: ClassifierViewModel
-    private val executor = Executors.newSingleThreadExecutor()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -50,6 +54,25 @@ class CameraFragment : Fragment() {
             findNavController().navigate(R.id.action_camera_to_permission)
         } else {
             bindCamera()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            Timber.v("onActivityResult(): requestCode = $requestCode, data = $data")
+            if (requestCode == RC_PICK_IMAGE) {
+                data?.data?.let { uri ->
+                    val image = if (Build.VERSION.SDK_INT < 28) {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(requireActivity().contentResolver, uri)
+                    } else {
+                        val source = ImageDecoder.createSource(requireActivity().contentResolver, uri)
+                        ImageDecoder.decodeBitmap(source)
+                    }.copy(Bitmap.Config.ARGB_8888, true)
+                    viewModel.classifyAsync(image)
+                }
+            }
         }
     }
 
@@ -76,6 +99,17 @@ class CameraFragment : Fragment() {
 
         btn_cf_settings.setOnClickListener {
             findNavController().navigate(R.id.action_camera_to_settings)
+        }
+
+        fab_cf_pick_image.setOnClickListener {
+            val intent = Intent(
+                    Intent.ACTION_PICK,
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            ).apply {
+                type = "image/*"
+            }
+            val chooserIntent = Intent.createChooser(intent, getString(R.string.m_camera_pick_image))
+            startActivityForResult(chooserIntent, RC_PICK_IMAGE)
         }
     }
 
@@ -118,7 +152,7 @@ class CameraFragment : Fragment() {
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {
-                    it.setAnalyzer(executor, ImageAnalysis.Analyzer { image ->
+                    it.setAnalyzer(viewModel.executor, ImageAnalysis.Analyzer { image ->
                         viewModel.classify(image)
                         image.close()
                     })
@@ -149,6 +183,7 @@ class CameraFragment : Fragment() {
     }
 
     companion object {
+        const val RC_PICK_IMAGE: Int = 20
         private const val RATIO_4_3_VALUE = 4.0 / 3.0
         private const val RATIO_16_9_VALUE = 16.0 / 9.0
 

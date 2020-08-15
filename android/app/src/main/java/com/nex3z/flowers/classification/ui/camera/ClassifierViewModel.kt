@@ -18,6 +18,8 @@ import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.image.ops.ResizeWithCropOrPadOp
 import timber.log.Timber
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class ClassifierViewModel(
     application: Application
@@ -34,6 +36,13 @@ class ClassifierViewModel(
     private var lastAnalyzedTimestamp = 0L
     private var confidentThreshold: Float = 0.9f
     private var scales: FloatArray = SINGLE_SCALE
+
+    val executor: ExecutorService = Executors.newSingleThreadExecutor()
+
+    override fun onCleared() {
+        super.onCleared()
+        executor.shutdown()
+    }
 
     fun initClassifier() {
         confidentThreshold = getDetectThreshold(getApplication())
@@ -57,6 +66,27 @@ class ClassifierViewModel(
         }
     }
 
+    @Synchronized
+    fun classifyAsync(image: Bitmap) {
+        executor.run {
+            classifier?.let {
+                try {
+                    val recognition = it.classify(image).first()
+                    Timber.v("classify(): recognition = $recognition")
+                    if (recognition.confidence >= confidentThreshold) {
+                        _recognition.postValue(Result(image, recognition))
+                    } else {
+                        _recognition.postValue(null)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "classify():")
+                    _error.postValue(ClassifierRunFailedException(e))
+                }
+            }
+        }
+    }
+
+    @Synchronized
     fun classify(imageProxy: ImageProxy) {
         val currentTimestamp = System.currentTimeMillis()
         if (currentTimestamp - lastAnalyzedTimestamp <= ANALYSIS_INTERVAL) {
