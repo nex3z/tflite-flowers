@@ -1,14 +1,18 @@
 package com.nex3z.flowers.classification.ui.settings
 
 import android.os.Bundle
+import android.view.View
 import androidx.activity.addCallback
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupWithNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.nex3z.flowers.classification.BuildConfig
 import com.nex3z.flowers.classification.R
 import com.nex3z.flowers.classification.ui.camera.ClassifierViewModel
+import kotlinx.android.synthetic.main.fragment_permission.*
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -33,5 +37,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("key_model_version")?.apply {
             summary = classifierViewModel.model.version
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val navController = findNavController()
+        val appBarConfiguration = AppBarConfiguration(navController.graph)
+        toolbar_fp.setupWithNavController(navController, appBarConfiguration)
     }
 }

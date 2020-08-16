@@ -13,6 +13,7 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <item name="android:windowTranslucentStatus">true</item>
         <!-- Customize your theme here. -->
+        <item name="preferenceTheme">@style/Theme.PreferenceThemeOverlay</item>
     </style>
 
     <style name="Theme.FlowersClassification.NoActionBar">
@@ -23,4 +24,9 @@
     <style name="Theme.FlowersClassification.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.FlowersClassification.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="Theme.PreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
+        <item name="android:layout">@layout/fragment_permission</item>
+    </style>
+
 </resources>
