@@ -44,6 +44,7 @@ class ClassifierViewModel(
         executor.shutdown()
     }
 
+    @Synchronized
     fun initClassifier() {
         confidentThreshold = getDetectThreshold(getApplication())
         val multiCrop = isMultiCropEnabled(getApplication())
@@ -53,35 +54,42 @@ class ClassifierViewModel(
 
         classifier?.close()
         classifier = null
-        try {
-            classifier = Classifier(
-                context = getApplication(),
-                model = model,
-                device = device,
-                topK = 1
-            )
-        } catch (e: Exception) {
-            Timber.e(e, "initClassifier(): Failed to create classifier")
-            _error.postValue(ClassifierInitFailedException(e))
+
+        executor.submit {
+            try {
+                classifier = Classifier(
+                        context = getApplication(),
+                        model = model,
+                        device = device,
+                        topK = 1
+                )
+                Timber.v("initClassifier(): classifier initialized")
+            } catch (e: Exception) {
+                Timber.e(e, "initClassifier(): Failed to create classifier")
+                _error.postValue(ClassifierInitFailedException(e))
+            }
         }
+        Timber.v("initClassifier(): complete")
+    }
+
+    fun classifyAsync(image: Bitmap) {
+        executor.submit { classify(image) }
     }
 
     @Synchronized
-    fun classifyAsync(image: Bitmap) {
-        executor.run {
-            classifier?.let {
-                try {
-                    val recognition = it.classify(image).first()
-                    Timber.v("classify(): recognition = $recognition")
-                    if (recognition.confidence >= confidentThreshold) {
-                        _recognition.postValue(Result(image, recognition))
-                    } else {
-                        _recognition.postValue(null)
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "classify():")
-                    _error.postValue(ClassifierRunFailedException(e))
+    fun classify(image: Bitmap) {
+        classifier?.let {
+            try {
+                val recognition = it.classify(image).first()
+                Timber.v("classify(): recognition = $recognition")
+                if (recognition.confidence >= confidentThreshold) {
+                    _recognition.postValue(Result(image, recognition))
+                } else {
+                    _recognition.postValue(null)
                 }
+            } catch (e: Exception) {
+                Timber.e(e, "classify():")
+                _error.postValue(ClassifierRunFailedException(e))
             }
         }
     }
