@@ -31,7 +31,8 @@ class ClassifierViewModel(
     private val _error: MutableLiveData<BaseException> = MutableLiveData()
     val error: LiveData<BaseException> = _error
 
-    val model: Model = MOBILE_NET_V2_FLOAT_MODEL
+//    val model: Model = MOBILE_NET_V2_INT8_MODEL
+    val model: Model = MOBILE_NET_V2_FLOAT16_MODEL
     private var classifier: Classifier? = null
     private var lastAnalyzedTimestamp = 0L
     private var confidentThreshold: Float = 0.9f
