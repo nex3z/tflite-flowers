@@ -30,6 +30,17 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Daisy"/>
 
+    <TextView
+        android:id="@+id/tv_vr_conf"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_marginStart="@dimen/spacing_s"
+        android:gravity="center_vertical"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toRightOf="@id/iv_vr_image"
+        app:layout_constraintTop_toBottomOf="@id/tv_vr_label"
+        tools:text="0.9876"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 
 
