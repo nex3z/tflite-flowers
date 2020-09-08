@@ -35,7 +35,7 @@ class ClassifierViewModel(
     val model: Model = MOBILE_NET_V2_FLOAT16_MODEL
     private var classifier: Classifier? = null
     private var lastAnalyzedTimestamp = 0L
-    private var confidentThreshold: Float = 0.9f
+    private var confidentThreshold: Float = getDetectThreshold(getApplication())
     private var scales: FloatArray = SINGLE_SCALE
 
     val executor: ExecutorService = Executors.newSingleThreadExecutor()
