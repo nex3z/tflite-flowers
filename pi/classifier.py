@@ -14,29 +14,47 @@ class Classifier(object):
         self.interpreter.allocate_tensors()
         self.labels = load_labels(label_path)
 
-        input_details = self.interpreter.get_input_details()
-        self.input_tensor = input_details[0]['index']
-        input_shape = input_details[0]['shape']
-        self.input_size = input_shape[:2] if len(input_shape) == 3 else input_shape[1:3]
+        self.input_details = self.interpreter.get_input_details()[0]
+        self.input_scale, self.input_zero_point = self.input_details['quantization']
+        self.input_tensor = self.input_details['index']
 
-        output_details = self.interpreter.get_output_details()
-        self.output_tensor = output_details[0]['index']
+        input_shape = self.input_details['shape']
+        self.input_size = tuple(input_shape[:2] if len(input_shape) == 3 else input_shape[1:3])
 
-    def classify(self, input_data, top=5):
-        if len(input_data.shape) < 4:
-            input_data = np.expand_dims(input_data, axis=0)
+        self.output_details = self.interpreter.get_output_details()[0]
+        self.output_scale, self.output_zero_point = self.output_details['quantization']
+        self.output_tensor = self.output_details['index']
+
+        logger.info(f"Loaded model {model_path}")
+        logger.info(f"[Input] dtype: {self.input_details['dtype']}, scale: {self.input_scale}, "
+                    f"zero_point: {self.input_zero_point}")
+        logger.info(f"[Output] dtype: {self.output_details['dtype']}, scale: {self.output_scale}, "
+                    f"zero_point: {self.output_zero_point}")
+
+    def classify(self, image, top=5):
+        if len(image.shape) < 4:
+            image = np.expand_dims(image, axis=0)
+
+        if self.input_details['dtype'] == np.uint8:
+            image = image / self.input_scale + self.input_zero_point
 
         start_time = time.time()
-        self.interpreter.set_tensor(self.input_tensor, input_data)
+
+        self.interpreter.set_tensor(self.input_tensor, image)
         self.interpreter.invoke()
-        predictions = self.interpreter.get_tensor(self.output_tensor)[0]
+        output = self.interpreter.get_tensor(self.output_tensor)[0]
+
         elapsed = time.time() - start_time
         logger.info("Elapsed {:.6f}s".format(elapsed))
 
-        top_k_idx = np.argsort(predictions)[::-1][:top]
+        if self.output_details['dtype'] == np.uint8:
+            output = self.output_scale * (output - self.output_zero_point)
+
+        top_k_idx = np.argsort(output)[::-1][:top]
         result = OrderedDict()
         for idx in top_k_idx:
-            result[self.labels[idx]] = predictions[idx]
+            result[self.labels[idx]] = output[idx]
+
         return result
 
 

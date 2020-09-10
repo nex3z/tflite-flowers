@@ -1,8 +1,7 @@
 import io
 import logging
-import sys
+
 import picamera
-from PIL import Image
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -30,14 +29,13 @@ def main():
             for _ in camera.capture_continuous(stream, format='jpeg', use_video_port=True):
                 stream.seek(0)
                 image = Image.open(stream).convert('RGB')
-                image = utils.center_crop(image)
                 image_data = utils.preprocess(image, classifier.input_size)
                 result = classifier.classify(image_data, TOP_NUM)
 
                 output = ""
                 for label, prob in result.items():
                     if prob < THRESHOLD:
-                        break;
+                        break
                     output += "{}".format(label)
                 print(output, end='\r')
 

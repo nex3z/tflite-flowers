@@ -1,11 +1,13 @@
 import argparse
 import logging
 
+from PIL import Image
+
 import utils as utils
 from classifier import Classifier
 
 LABEL_PATH = 'labels.txt'
-MODEL_PATH = "../tflite_model/mobilenet_v2/model_float16.tflite"
+MODEL_PATH = "../tflite_model/model_float16.tflite"
 TOP_NUM = 5
 
 
@@ -14,7 +16,8 @@ def main():
     args = parser.parse_args()
 
     classifier = Classifier(MODEL_PATH, LABEL_PATH)
-    image_data = utils.preprocess_image_file(args.image_file, classifier.input_size)
+    image = Image.open(args.image_file).convert('RGB')
+    image_data = utils.preprocess(image, classifier.input_size)
     result = classifier.classify(image_data, TOP_NUM)
 
     for label, prob in result.items():
