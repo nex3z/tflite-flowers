@@ -6,7 +6,7 @@ from PIL import Image
 import utils as utils
 from classifier import Classifier
 
-LABEL_PATH = 'labels.txt'
+LABEL_PATH = "labels.txt"
 MODEL_PATH = "../tflite_model/model_float16.tflite"
 TOP_NUM = 5
 

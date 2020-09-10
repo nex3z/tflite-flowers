@@ -9,8 +9,8 @@ from PIL import ImageFont
 import utils as utils
 from classifier import Classifier
 
-LABEL_PATH = 'labels.txt'
-MODEL_PATH = "../tflite_model/mobilenet_v2/model_float16.tflite"
+LABEL_PATH = "labels.txt"
+MODEL_PATH = "../tflite_model/model_float16.tflite"
 TOP_NUM = 1
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 380
@@ -22,6 +22,7 @@ def main():
     classifier = Classifier(MODEL_PATH, LABEL_PATH)
     font = ImageFont.truetype("DejaVuSans.ttf", 48)
     overlay = None
+    print("init")
     with picamera.PiCamera(resolution=CAMERA_RESOLUTION, framerate=30) as camera:
         camera.start_preview()
         try:
