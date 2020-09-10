@@ -15,7 +15,7 @@ TOP_NUM = 1
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 380
 CAMERA_RESOLUTION = (CAMERA_WIDTH, CAMERA_HEIGHT)
-THRESHOLD = 0.9
+THRESHOLD = 0.8
 
 
 def main():
@@ -34,10 +34,10 @@ def main():
                 result = classifier.classify(image_data, TOP_NUM)
 
                 output = ""
-                for label, prob in result.items():
-                    if prob < THRESHOLD:
+                for label, confidence in result.items():
+                    if confidence < THRESHOLD:
                         break
-                    output += "{}".format(label)
+                    output += "{}({:.4f})".format(label, confidence)
                 print(output, end='\r')
 
                 img = Image.new('RGBA', CAMERA_RESOLUTION, (255, 0, 0, 0))
