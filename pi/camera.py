@@ -16,13 +16,12 @@ CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 380
 CAMERA_RESOLUTION = (CAMERA_WIDTH, CAMERA_HEIGHT)
 THRESHOLD = 0.8
+FONT = ImageFont.truetype("DejaVuSans.ttf", 48)
 
 
 def main():
     classifier = Classifier(MODEL_PATH, LABEL_PATH)
-    font = ImageFont.truetype("DejaVuSans.ttf", 48)
     overlay = None
-    print("init")
     with picamera.PiCamera(resolution=CAMERA_RESOLUTION, framerate=30) as camera:
         camera.start_preview()
         try:
@@ -40,20 +39,7 @@ def main():
                     output += "{}({:.4f})".format(label, confidence)
                 print(output, end='\r')
 
-                img = Image.new('RGBA', CAMERA_RESOLUTION, (255, 0, 0, 0))
-                draw = ImageDraw.Draw(img)
-                draw.rectangle(((208, 68), (432, 292)))
-                draw.text((0, CAMERA_HEIGHT-50), output, fill='white', font=font)
-                pad = Image.new('RGBA', (
-                    ((img.size[0] + 31) // 32) * 32,
-                    ((img.size[1] + 15) // 16) * 16,
-                ))
-                pad.paste(img, (0, 0))
-
-                o = camera.add_overlay(pad.tobytes(), size=img.size)
-                o.alpha = 128
-                o.layer = 3
-
+                o = add_text_overlay(camera, output)
                 if overlay is not None:
                     camera.remove_overlay(overlay)
                 overlay = o
@@ -63,6 +49,19 @@ def main():
 
         finally:
             camera.stop_preview()
+
+
+def add_text_overlay(camera, text):
+    img = Image.new('RGBA', CAMERA_RESOLUTION, (255, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    draw.rectangle(((208, 68), (432, 292)))
+    draw.text((0, CAMERA_HEIGHT - 50), text, fill='white', font=FONT)
+    pad = Image.new('RGBA', (((img.size[0] + 31) // 32) * 32, ((img.size[1] + 15) // 16) * 16))
+    pad.paste(img, (0, 0))
+    o = camera.add_overlay(pad.tobytes(), size=img.size)
+    o.alpha = 128
+    o.layer = 3
+    return o
 
 
 if __name__ == '__main__':
